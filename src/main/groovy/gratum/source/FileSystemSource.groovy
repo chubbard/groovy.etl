@@ -1,6 +1,7 @@
 package gratum.source
 
 import gratum.etl.Pipeline
+import groovy.transform.CompileStatic
 
 /**
  * Creates a source that enumerates files within a directory and returns
@@ -9,6 +10,7 @@ import gratum.etl.Pipeline
  * but recursively visits all subdirectories.  You can include an optional
  * filter to match files.
  */
+@CompileStatic
 class FileSystemSource extends AbstractSource {
 
     File file

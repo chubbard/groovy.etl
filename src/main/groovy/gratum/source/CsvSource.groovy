@@ -3,6 +3,7 @@ package gratum.source
 import gratum.csv.CSVFile
 import gratum.csv.CSVReader
 import gratum.etl.Pipeline
+import groovy.transform.CompileStatic
 
 
 /**
@@ -35,6 +36,7 @@ import gratum.etl.Pipeline
  *     csv( "External InputStream", stream, "|" ).filter( [ someColumn: "someValue" ] ).go()
  * </pre>
  */
+@CompileStatic
 public class CsvSource extends AbstractSource {
     CSVFile csvFile
 

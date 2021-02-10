@@ -7,6 +7,7 @@ import gratum.source.ChainedSource
 import gratum.source.ClosureSource
 import gratum.source.Source
 import groovy.json.JsonOutput
+import groovy.transform.CompileStatic
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -31,7 +32,7 @@ class Step {
  * the entire Pipeline are said to have been loaded.  Any row that does not pass through all steps is said 
  * to be rejected.
  * 
- * Rows orginate from the Pipeline's {@link gratum.source.Source}.  The {@link gratum.source.Source} sends 
+ * Rows originate from the Pipeline's {@link gratum.source.Source}.  The {@link gratum.source.Source} sends
  * rows into the Pipeline until it finishes.  The Pipeline keeps a set of statistics about how many rows
  * were loaded, rejected, the types of rejections, timing, etc.  This is kept in the {@link gratum.etl.LoadStatistic}
  * instance and returned from the {@link Pipeline#go(Closure)} method.
@@ -65,6 +66,7 @@ class Step {
  *    took 1 ms
  * </pre>
  */
+//@CompileStatic
 public class Pipeline {
 
     LoadStatistic statistic
@@ -209,6 +211,10 @@ public class Pipeline {
      * In this example it invokes the Closure with the value at row['hair'] and the Closure evaluates
      * to a boolean to decide if a row is filtered or not.
      *
+     * You can also use a java.util.regex.Pattern to match data too.  For example,
+     *
+     * .filter( [hair: /Brown|Red/, eyeColor: ['Blue', 'Brown'] ] )
+     *
      * @param columns a Map that contains the columns, and their values that are passed through
      * @return A pipeline that only includes the rows matching the given filter.
      */
@@ -245,7 +251,7 @@ public class Pipeline {
      * @return Pipeline where all columns of each row has white space removed.
      */
     public Pipeline trim() {
-        addStep("trim()") { Map row ->
+        addStep("trim()") { Map<String,Object> row ->
             row.each { String key, Object value -> row[key] = (value as String)?.trim() }
             return row
         }
@@ -311,7 +317,7 @@ public class Pipeline {
      * @return A Pipeline where the rows contain all columns from the this Pipeline and right Pipeline joined on the given columns.
      */
     public Pipeline join( Pipeline other, def columns, boolean left = false ) {
-        Map<String,List<Map>> cache =[:]
+        Map<String,List<Map<String,Object>>> cache =[:]
         other.addStep("join(${other.name}, ${columns}).cache") { Map row ->
             String key = keyOf(row, rightColumn(columns) )
             if( !cache.containsKey(key) ) cache.put(key, [])
@@ -363,17 +369,17 @@ public class Pipeline {
      * @return A Pipeline where the row's empty column values are filled in by the previous row.
      */
     public Pipeline fillDownBy( Closure<Boolean> decider ) {
-        Map previousRow = null
-        addStep("fillDownBy()") { Map row ->
+        Map<String,Object> previousRow = null
+        addStep("fillDownBy()") { Map<String,Object> row ->
             if( previousRow && decider( row, previousRow ) ) {
                 row.each { String col, Object value ->
                     // todo refactor valid_to out for excluded
-                    if (col != "valid_To" && (value == null || value.isEmpty())) {
+                    if (col != "valid_to" && (value == null || value.toString().isEmpty())) {
                         row[col] = previousRow[col]
                     }
                 }
             }
-            previousRow = row.clone()
+            previousRow = (Map<String,Object>)row.clone()
             return row
         }
         return this
@@ -841,7 +847,7 @@ public class Pipeline {
             this.statistic.start = src.statistic.start
             for( RejectionCategory cat : src.statistic.rejectionsByCategory.keySet() ) {
                 if( !this.statistic.rejectionsByCategory.containsKey(cat) ) {
-                    this.statistic.rejectionsByCategory[ cat ] = [:]
+                    this.statistic.rejectionsByCategory[ cat ] = [:] as Map<String, Integer>
                 }
                 for( String step : src.statistic.rejectionsByCategory[cat].keySet() ) {
                     if( !this.statistic.rejectionsByCategory[cat].containsKey(step) ) {

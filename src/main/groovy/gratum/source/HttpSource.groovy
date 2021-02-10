@@ -1,5 +1,7 @@
 package gratum.source
 
+import groovy.transform.CompileStatic
+
 import static groovyx.net.http.HttpBuilder.configure
 
 import gratum.etl.Pipeline
@@ -19,6 +21,7 @@ import gratum.etl.Pipeline
  * To configure the http connection pass a closure that will pass
  * to {@link groovyx.net.http.HttpBuilder#configure(Closure)}.
  */
+@CompileStatic
 class HttpSource extends AbstractSource {
 
     String url
@@ -44,7 +47,7 @@ class HttpSource extends AbstractSource {
             request.uri = url
             if( configuration ) {
                 configuration.delegate = delegate
-                configuration()
+                configuration.call()
             }
         }.get()
 
